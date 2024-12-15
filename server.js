@@ -4,8 +4,8 @@ const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
 require("dotenv").config();
+const verifyApiKey = require("./middleware");
 
-const PASSWORD = process.env.API_PASSWORD;
 const PORT = process.env.PORT;
 const app = express();
 
@@ -15,15 +15,7 @@ app.use("/public", express.static(path.join(__dirname, "public")));
 
 const storiesFile = path.join(__dirname, "stories.json");
 
-app.post("/api/stories", (req, res) => {
-  const { password } = req.query;
-
-  if (password !== PASSWORD) {
-    console.log("Mot de passe invalide" + password);
-    return res
-      .status(403)
-      .json({ error: "Accès refusé : mot de passe invalide." });
-  }
+app.post("/api/stories", verifyApiKey, (req, res) => {
   const { image } = req.body;
 
   if (!image) {
@@ -52,15 +44,7 @@ app.post("/api/stories", (req, res) => {
   });
 });
 
-app.get("/api/stories", (req, res) => {
-  const { password } = req.query;
-
-  if (password !== PASSWORD) {
-    console.log("Mot de passe invalide" + password);
-    return res
-      .status(403)
-      .json({ error: "Accès refusé : mot de passe invalide." });
-  }
+app.get("/api/stories", verifyApiKey, (req, res) => {
   const stories = JSON.parse(fs.readFileSync(storiesFile, "utf8"));
   res.json(
     stories.map((story) => ({
@@ -70,7 +54,7 @@ app.get("/api/stories", (req, res) => {
   );
 });
 
-app.delete("/api/stories/last", (req, res) => {
+app.delete("/api/stories/last", verifyApiKey, (req, res) => {
   const stories = JSON.parse(fs.readFileSync(storiesFile, "utf8"));
 
   if (stories.length === 0) {
@@ -100,7 +84,7 @@ app.delete("/api/stories/last", (req, res) => {
   });
 });
 
-app.delete("/api/stories", (req, res) => {
+app.delete("/api/stories", verifyApiKey, (req, res) => {
   const stories = JSON.parse(fs.readFileSync(storiesFile, "utf8"));
 
   if (stories.length === 0) {
@@ -141,6 +125,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Serveur lancé sur http://localhost:${PORT}`);
-  console.log(`Mot de passe de l'API : ${PASSWORD}`);
+  console.log(`Serveur lancé sur ${PORT}`);
 });
