@@ -19,6 +19,7 @@ app.post("/api/stories", (req, res) => {
   const { password } = req.query;
 
   if (password !== PASSWORD) {
+    console.log("Mot de passe invalide" + password);
     return res
       .status(403)
       .json({ error: "Accès refusé : mot de passe invalide." });
@@ -44,7 +45,7 @@ app.post("/api/stories", (req, res) => {
 
     const newStory = { filename, timestamp: Date.now() };
     const stories = JSON.parse(fs.readFileSync(storiesFile, "utf8"));
-    stories.unshift(newStory); // Ajoute au début du tableau
+    stories.unshift(newStory);
     fs.writeFileSync(storiesFile, JSON.stringify(stories, null, 2));
 
     res.status(201).json({ message: "Story ajoutée avec succès." });
@@ -55,6 +56,7 @@ app.get("/api/stories", (req, res) => {
   const { password } = req.query;
 
   if (password !== PASSWORD) {
+    console.log("Mot de passe invalide" + password);
     return res
       .status(403)
       .json({ error: "Accès refusé : mot de passe invalide." });
@@ -74,4 +76,5 @@ app.get("/", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Serveur lancé sur http://localhost:${PORT}`);
+  console.log(`Mot de passe de l'API : ${PASSWORD}`);
 });
