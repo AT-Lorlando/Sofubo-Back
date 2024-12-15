@@ -70,6 +70,72 @@ app.get("/api/stories", (req, res) => {
   );
 });
 
+app.delete("/api/stories/last", (req, res) => {
+  const stories = JSON.parse(fs.readFileSync(storiesFile, "utf8"));
+
+  if (stories.length === 0) {
+    return res
+      .status(404)
+      .json({ error: "Aucune story disponible pour suppression." });
+  }
+
+  // Récupère la dernière story
+  const lastStory = stories[0];
+  const filePath = path.join(__dirname, "public", lastStory.filename);
+
+  // Supprime le fichier de l'image
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      console.error("Erreur lors de la suppression de l'image :", err);
+      return res
+        .status(500)
+        .json({ error: "Erreur interne lors de la suppression." });
+    }
+
+    // Supprime la story des métadonnées
+    stories.shift();
+    fs.writeFileSync(storiesFile, JSON.stringify(stories, null, 2));
+
+    res.status(200).json({ message: "Dernière story supprimée avec succès." });
+  });
+});
+
+app.delete("/api/stories", (req, res) => {
+  const stories = JSON.parse(fs.readFileSync(storiesFile, "utf8"));
+
+  if (stories.length === 0) {
+    return res
+      .status(404)
+      .json({ error: "Aucune story disponible pour suppression." });
+  }
+
+  // Supprime tous les fichiers d'images
+  const deletePromises = stories.map((story) => {
+    const filePath = path.join(__dirname, "public", story.filename);
+    return new Promise((resolve, reject) => {
+      fs.unlink(filePath, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+  });
+
+  Promise.all(deletePromises)
+    .then(() => {
+      // Réinitialise le fichier JSON
+      fs.writeFileSync(storiesFile, "[]", "utf8");
+      res.status(200).json({
+        message: "Toutes les stories ont été supprimées avec succès.",
+      });
+    })
+    .catch((err) => {
+      console.error("Erreur lors de la suppression des fichiers :", err);
+      res
+        .status(500)
+        .json({ error: "Erreur interne lors de la suppression des stories." });
+    });
+});
+
 app.get("/", (req, res) => {
   res.send("Hello World");
 });
